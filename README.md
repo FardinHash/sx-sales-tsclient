@@ -1,4 +1,4 @@
-# LinkedIn Scraping Tools with Selenium
+# LinkedIn Scraping Tools with Selenium (ScrapeX)
 ## Description
 This repository is composed of different utilities that can be useful to scrape LinkedIn data. The tools are written in Python and use the Selenium library to interact with the LinkedIn website. The tools are designed to be used with the Chrome web browser, but can be modified to work with other browsers.
 
@@ -13,8 +13,8 @@ Here are the different tools that are currently available:
 Create a new file called *lk_credentials.json* at the root of the project and add the following content:
 ```json
 {
-    "email": "YOUR_LINKEDIN_EMAIL",
-    "password": "YOUR_LINKEDIN_PASSWORD"
+    "email": "LINKEDIN_EMAIL",
+    "password": "LINKEDIN_PASSWORD"
 }
 ```
 
@@ -30,8 +30,7 @@ Below are the options you can use:
 *--wait-after-scroll-down*: The time in seconds to wait after scrolling down (optional, default is 3).\
 *--save-format*: The format to save the data in (optional, available options: "xlsx" or "csv", default is "csv").
 
-#### Example
-You can run the script with the following command:
+#### Run
 ```bash	
 python lksn_search_scraper.py --search-url "https://www.linkedin.com/sales/search/people?query=(spellCorrectionEnabled%3Atrue%2Ckeywords%3Ascraping)" --start-page 1 --end-page 5 --save-format "csv"
 ```
@@ -47,8 +46,7 @@ Below are the options you can use:
 *--wait-after-scroll-down*: The time in seconds to wait after scrolling down (optional, default is 3).\
 *--save-format*: The format to save the data in (optional, available options: "xlsx" or "csv", default is "csv").
 
-#### Example
-You can run the script with the following command:
+#### Run
 ```bash
 python lkr_search_scraper.py --search-url "https://www.linkedin.com/talent/search?searchContextId=8fe5d263-7739-471f-89ea-6b0a4d0fd91d&searchHistoryId=5262292356&searchRequestId=ca1839e7-ba16-4ad4-80ed-d13873939073" --start 5 --end 20 --save-format "csv"
 ```
@@ -61,15 +59,7 @@ Below are the options you can use:
 *--longest_wait_time*: Longest wait time in seconds between actions (optional, default is 7).\
 *--page_load_time*: Time to wait in seconds for the page to load (optional, default is 3).
 
-#### Example
-You can run the script with the following command:
+#### Run
 ```bash
 python your_script_name.py --profile_file "./lksn_data/1692694694168_lk_salesnav_export.csv" --shortest_wait_time 3 --longest_wait_time 8 --page_load_time 4
 ```
-
-
-
-## Disclaimer
-The tools and code provided in this repository were created for educational purposes only. Utilizing these tools to scrape or interact with LinkedIn or any other websites in a manner that breaches their terms of service is strictly against the intended use. Anyone who chooses to use these tools in such a way does so at their own risk and assumes all legal responsibility. The author does not endorse or promote any actions that may violate any website's terms of service.
-
-If anyhow you decide to use this tool in a controlled environment, you might get blocked by LinkedIn. The use of LinkedIn Sales Navigator or LinkedIn Recruiter mitigates the limits of the scraping, but it is still possible to get blocked.
