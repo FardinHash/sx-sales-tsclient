@@ -1,11 +1,3 @@
-"""
-This is meant to be run as a CLI script.
-It will visit the profiles in the given file and perform the actions specified in action_on_page_visit (moving mouse, scrolling down, etc.).
-
-Example usage:
-python lk_visitor.py --profile_file ./profiles.csv --shortest_wait_time 4 --longest_wait_time 7 --page_load_time 3
-"""
-
 import argparse
 import logging
 import time
