@@ -1,0 +1,25 @@
+{
+  "name": "sx-sales",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/argparse": "^2.0.16",
+    "@types/node": "^20.14.0",
+    "argparse": "^2.0.1",
+    "jsdom": "^24.1.0",
+    "puppeteer": "^22.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/puppeteer": "^7.0.4"
+  }
+}
