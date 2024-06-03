@@ -1,6 +1,6 @@
 import * as puppeteer from 'puppeteer';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ArgumentParser } from 'argparse';
 import { JSDOM } from 'jsdom';
 import * as readline from 'readline';
@@ -10,7 +10,7 @@ const SCROLL_TO_BOTTOM_COMMAND = "document.getElementById('search-results-contai
 const LK_CREDENTIALS_PATH = "./lk_credentials.json";
 
 async function getNameInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.flex.flex-wrap.align-items-center > div.artdeco-entity-lockup__title.ember-view > a";
+    const selector = "a[data-anonymize='person-name']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let linkToProfile = "";
     let fullName = "";
@@ -28,7 +28,7 @@ async function getNameInfoFromResultEl(resultEl: Element) {
 }
 
 async function getConnectionLevelInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.flex.flex-wrap.align-items-center > div.artdeco-entity-lockup__badge.ember-view.ml1 > span.artdeco-entity-lockup__degree";
+    const selector = "span.dist-value";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let connection = "";
     if (els.length > 0) {
@@ -37,20 +37,15 @@ async function getConnectionLevelInfoFromResultEl(resultEl: Element) {
     return { connection };
 }
 
-async function getSearchUrl(searchUrlBase: URL, page = 1): Promise<string> {
-    searchUrlBase.searchParams.set('page', page.toString());
-    return searchUrlBase.toString();
-}
-
 async function getLinkedInPremiumInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.inline-flex > div > li-icon";
+    const selector = "li-icon[type='premium']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     const is_premium = els.length > 0;
     return { is_premium };
 }
 
 async function getRoleInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.artdeco-entity-lockup__subtitle.ember-view.t-14 > span";
+    const selector = "div[data-anonymize='job-title']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let current_position_title = "";
     if (els.length > 0) {
@@ -60,7 +55,7 @@ async function getRoleInfoFromResultEl(resultEl: Element) {
 }
 
 async function getCompanyInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.artdeco-entity-lockup__subtitle.ember-view.t-14 > a";
+    const selector = "div[data-anonymize='company-name']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let current_company_name = "";
     if (els.length > 0) {
@@ -70,7 +65,7 @@ async function getCompanyInfoFromResultEl(resultEl: Element) {
 }
 
 async function getLocationInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mt2 > div > div.artdeco-entity-lockup__caption.ember-view.t-14.t-black--light > span";
+    const selector = "span[data-anonymize='location']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let location = "";
     if (els.length > 0) {
@@ -80,7 +75,7 @@ async function getLocationInfoFromResultEl(resultEl: Element) {
 }
 
 async function getProfilePicUrlFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.entity-result__content > div > div.entity-result__image > div > img";
+    const selector = "img[data-anonymize='person-photo']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let profile_pic_url = "";
     if (els.length > 0) {
@@ -90,14 +85,14 @@ async function getProfilePicUrlFromResultEl(resultEl: Element) {
 }
 
 async function getOpenLinkInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.flex.justify-space-between.full-width > div.flex.flex-column > div.mb3 > div > div.artdeco-entity-lockup__content.ember-view > div.inline-flex > div > li-icon[type='openlink']";
+    const selector = "li-icon[type='openlink']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     const is_open_link = els.length > 0;
     return { is_open_link };
 }
 
 async function getIndustryInfoFromResultEl(resultEl: Element) {
-    const selector = "div > div > div.entity-result__content > div > div.entity-result__primary-subtitle";
+    const selector = "div[data-anonymize='industry']";  // Updated selector
     const els = resultEl.querySelectorAll(selector);
     let current_industry = "";
     if (els.length > 0) {
@@ -134,7 +129,7 @@ async function getInfoFromResultEl(resultEl: Element) {
 async function getResultEls(pageSource: string) {
     const dom = new JSDOM(pageSource);
     const document = dom.window.document;
-    const fullResultsSelector = "#search-results-container > div > ol > li";
+    const fullResultsSelector = "li.search-result";  // Updated selector
     return Array.from(document.querySelectorAll(fullResultsSelector));
 }
 
@@ -153,19 +148,20 @@ async function getAllInfoFromSearchUrl(page: puppeteer.Page, url: string, waitAf
     return await getAllInfoFromPageSource(pageSource);
 }
 
-async function scrapLksnPages(page: puppeteer.Page, pageList: number[], getSearchUrl: (page: number) => Promise<string>, waitTimeBetweenPages = 3, waitAfterPageLoaded = 3, waitAfterScrollDown = 2) {
+async function getSearchUrl(searchUrlBase: URL, page = 1): Promise<string> {
+    searchUrlBase.searchParams.set('page', page.toString());
+    return searchUrlBase.toString();
+}
+
+async function scrapLksnPages(page: puppeteer.Page, pageList: number[], searchUrlBase: URL, waitTimeBetweenPages = 3, waitAfterPageLoaded = 3, waitAfterScrollDown = 2) {
     let totalInfo: any[] = [];
     for (const p of pageList) {
         await delay(waitTimeBetweenPages * 1000);
-        const url = await getSearchUrl(p);
+        const url = await getSearchUrl(searchUrlBase, p);
         const info = await getAllInfoFromSearchUrl(page, url, waitAfterPageLoaded, waitAfterScrollDown);
         totalInfo = totalInfo.concat(info);
     }
     return totalInfo;
-}
-
-async function scrapLksPages(page: puppeteer.Page, pageList: number[], getSearchUrl: (page: number) => Promise<string>, getLkCredential: (page: number) => Promise<void>) {
-    // Implementation if required
 }
 
 async function main() {
@@ -209,9 +205,16 @@ async function main() {
         rl.close();
         try {
             // Wait for manual verification
-            await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 120000 });
-            
-            console.log('Navigation after verification is complete. Proceeding to search URL...');
+            await delay(10000); // Wait 10 seconds for user to complete verification
+
+            // Check if still on the login or verification page
+            const currentUrl = page.url();
+            if (currentUrl.includes('checkpoint') || currentUrl.includes('login')) {
+                console.log('Verification might still be required. Please complete it in the browser.');
+                await delay(60000); // Wait an additional 60 seconds
+            }
+
+            console.log('Proceeding to the search URL...');
 
             // Remove session-specific parameters if needed
             const cleanedSearchUrl = removeUrlParameter(searchUrl, 'sessionId');
@@ -222,7 +225,7 @@ async function main() {
             const searchUrlBase = new URL(cleanedSearchUrlFinal);
             const cleanedSearchUrlBase = removeUrlParameter(cleanedSearchUrlFinal, 'page');
 
-            const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
+            const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), searchUrlBase, waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
 
             console.log(`Found ${lksnSearchInfos.length} leads.`);
 
