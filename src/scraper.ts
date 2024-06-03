@@ -191,7 +191,7 @@ async function main() {
 
     const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
-    await page.goto('https://www.linkedin.com/login/');
+    await page.goto('https://www.linkedin.com/login/', { waitUntil: 'networkidle2' });
 
     const credentials = await getLkCredentials(LK_CREDENTIALS_PATH);
     await enterIdsOnLkSignin(page, credentials.email, credentials.password);
@@ -201,38 +201,39 @@ async function main() {
         output: process.stdout,
     });
 
-    rl.question('Please complete any required verification and press Enter...', () => {
+    rl.question('Please complete any required verification and press Enter...', async () => {
         rl.close();
+        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 90000 });
+        
+        await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 90000 });
+
+        const searchUrlBase = new URL(searchUrl);
+        const cleanedSearchUrlBase = removeUrlParameter(searchUrl, 'page');
+
+        const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
+
+        console.log(`Found ${lksnSearchInfos.length} leads.`);
+
+        const outputDir = 'lksn_data';
+        if (!fs.existsSync(outputDir)) {
+            fs.mkdirSync(outputDir);
+        }
+
+        const timestamp = Date.now();
+        const fileName = path.join(outputDir, `${timestamp}_lk_salesnav_export.${saveFormat}`);
+
+        if (saveFormat === 'csv') {
+            const header = Object.keys(lksnSearchInfos[0]).join(',');
+            const data = lksnSearchInfos.map(info => Object.values(info).join(',')).join('\n');
+            fs.writeFileSync(fileName, `${header}\n${data}`, 'utf-8');
+        } else {
+            // You can use a library like exceljs to write xlsx files
+        }
+
+        console.log(`Saved to ${fileName}`);
+
+        await browser.close();
     });
-
-    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 90000 });
-
-    const searchUrlBase = new URL(searchUrl);
-    const cleanedSearchUrlBase = removeUrlParameter(searchUrl, 'page');
-
-    const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
-
-    console.log(`Found ${lksnSearchInfos.length} leads.`);
-
-    const outputDir = 'lksn_data';
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir);
-    }
-
-    const timestamp = Date.now();
-    const fileName = path.join(outputDir, `${timestamp}_lk_salesnav_export.${saveFormat}`);
-
-    if (saveFormat === 'csv') {
-        const header = Object.keys(lksnSearchInfos[0]).join(',');
-        const data = lksnSearchInfos.map(info => Object.values(info).join(',')).join('\n');
-        fs.writeFileSync(fileName, `${header}\n${data}`, 'utf-8');
-    } else {
-        // You can use a library like exceljs to write xlsx files
-    }
-
-    console.log(`Saved to ${fileName}`);
-
-    await browser.close();
 }
 
 main().catch(console.error);
