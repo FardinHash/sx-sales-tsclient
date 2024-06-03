@@ -229,6 +229,11 @@ async function main() {
 
             console.log(`Found ${lksnSearchInfos.length} leads.`);
 
+            if (lksnSearchInfos.length === 0) {
+                console.log('No leads found.');
+                return;
+            }
+
             const outputDir = 'lksn_data';
             if (!fs.existsSync(outputDir)) {
                 fs.mkdirSync(outputDir);
