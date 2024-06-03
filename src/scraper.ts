@@ -135,6 +135,10 @@ async function getResultEls(pageSource: string) {
 
 async function getAllInfoFromPageSource(pageSource: string) {
     const resultEls = await getResultEls(pageSource);
+    if (resultEls.length === 0) {
+        console.log('No result elements found.');
+        return [];
+    }
     const infos = await Promise.all(resultEls.map(el => getInfoFromResultEl(el)));
     return infos;
 }
