@@ -4,7 +4,7 @@ import path from 'path';
 import { ArgumentParser } from 'argparse';
 import { JSDOM } from 'jsdom';
 import * as readline from 'readline';
-import { getLkCredentials, enterIdsOnLkSignin, getLkUrlFromSalesLkUrl, removeUrlParameter, delay } from './general_lk_utils';
+import { getLkCredentials, enterIdsOnLkSignin, removeUrlParameter, delay } from './general_lk_utils';
 
 const SCROLL_TO_BOTTOM_COMMAND = "document.getElementById('search-results-container').scrollTop+=100000;";
 const LK_CREDENTIALS_PATH = "./lk_credentials.json";
@@ -208,14 +208,19 @@ async function main() {
     rl.question('Please complete any required verification and press Enter...', async () => {
         rl.close();
         try {
+            // Wait for manual verification
             await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 120000 });
             
             console.log('Navigation after verification is complete. Proceeding to search URL...');
 
-            await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 120000 });
+            // Remove session-specific parameters if needed
+            const cleanedSearchUrl = removeUrlParameter(searchUrl, 'sessionId');
+            const cleanedSearchUrlFinal = removeUrlParameter(cleanedSearchUrl, 'viewAllFilters');
 
-            const searchUrlBase = new URL(searchUrl);
-            const cleanedSearchUrlBase = removeUrlParameter(searchUrl, 'page');
+            await page.goto(cleanedSearchUrlFinal, { waitUntil: 'networkidle2', timeout: 120000 });
+
+            const searchUrlBase = new URL(cleanedSearchUrlFinal);
+            const cleanedSearchUrlBase = removeUrlParameter(cleanedSearchUrlFinal, 'page');
 
             const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
 
