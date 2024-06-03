@@ -30,22 +30,6 @@ export async function enterIdsOnLkSignin(page: Page, email: string, password: st
     }
 }
 
-export function getLkUrlFromSalesLkUrl(url: string): string | null {
-    const parsed = /\/lead\/(.*?),/i.exec(url);
-    if (parsed) {
-        return `https://www.linkedin.com/in/${parsed[1]}`;
-    }
-    return null;
-}
-
-export async function selectContractLk(page: Page): Promise<void> {
-    const contractFilter = await page.$(SELECT_CONTRACT_BUTTON_SELECTOR);
-    if (contractFilter) {
-        await contractFilter.click();
-        await delay(4000);
-    }
-}
-
 export function removeUrlParameter(url: string, param: string): string {
     const parsedUrl = new URL(url);
     parsedUrl.searchParams.delete(param);
