@@ -210,6 +210,8 @@ async function main() {
         try {
             await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 120000 });
             
+            console.log('Navigation after verification is complete. Proceeding to search URL...');
+
             await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 120000 });
 
             const searchUrlBase = new URL(searchUrl);
