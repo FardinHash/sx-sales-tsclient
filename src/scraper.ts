@@ -37,7 +37,7 @@ async function getConnectionLevelInfoFromResultEl(resultEl: Element) {
     return { connection };
 }
 
-async function getSearchUrl(searchUrlBase: URL, page = 1) {
+async function getSearchUrl(searchUrlBase: URL, page = 1): Promise<string> {
     searchUrlBase.searchParams.set('page', page.toString());
     return searchUrlBase.toString();
 }
@@ -145,7 +145,7 @@ async function getAllInfoFromPageSource(pageSource: string) {
 }
 
 async function getAllInfoFromSearchUrl(page: puppeteer.Page, url: string, waitAfterPageLoaded = 3, waitAfterScrollDown = 2) {
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 90000 }); // Increased timeout to 90 seconds
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 }); // Increased timeout to 120 seconds
     await delay(waitAfterPageLoaded * 1000);
     await page.evaluate(SCROLL_TO_BOTTOM_COMMAND);
     await delay(waitAfterScrollDown * 1000);
@@ -162,6 +162,10 @@ async function scrapLksnPages(page: puppeteer.Page, pageList: number[], getSearc
         totalInfo = totalInfo.concat(info);
     }
     return totalInfo;
+}
+
+async function scrapLksPages(page: puppeteer.Page, pageList: number[], getSearchUrl: (page: number) => Promise<string>, getLkCredential: (page: number) => Promise<void>) {
+    // Implementation if required
 }
 
 async function main() {
@@ -203,36 +207,40 @@ async function main() {
 
     rl.question('Please complete any required verification and press Enter...', async () => {
         rl.close();
-        await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 90000 });
-        
-        await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 90000 });
+        try {
+            await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 120000 });
+            
+            await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 120000 });
 
-        const searchUrlBase = new URL(searchUrl);
-        const cleanedSearchUrlBase = removeUrlParameter(searchUrl, 'page');
+            const searchUrlBase = new URL(searchUrl);
+            const cleanedSearchUrlBase = removeUrlParameter(searchUrl, 'page');
 
-        const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
+            const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), page => getSearchUrl(new URL(cleanedSearchUrlBase), page), waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
 
-        console.log(`Found ${lksnSearchInfos.length} leads.`);
+            console.log(`Found ${lksnSearchInfos.length} leads.`);
 
-        const outputDir = 'lksn_data';
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir);
+            const outputDir = 'lksn_data';
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir);
+            }
+
+            const timestamp = Date.now();
+            const fileName = path.join(outputDir, `${timestamp}_lk_salesnav_export.${saveFormat}`);
+
+            if (saveFormat === 'csv') {
+                const header = Object.keys(lksnSearchInfos[0]).join(',');
+                const data = lksnSearchInfos.map(info => Object.values(info).join(',')).join('\n');
+                fs.writeFileSync(fileName, `${header}\n${data}`, 'utf-8');
+            } else {
+                // You can use a library like exceljs to write xlsx files
+            }
+
+            console.log(`Saved to ${fileName}`);
+        } catch (error) {
+            console.error('An error occurred:', error);
+        } finally {
+            await browser.close();
         }
-
-        const timestamp = Date.now();
-        const fileName = path.join(outputDir, `${timestamp}_lk_salesnav_export.${saveFormat}`);
-
-        if (saveFormat === 'csv') {
-            const header = Object.keys(lksnSearchInfos[0]).join(',');
-            const data = lksnSearchInfos.map(info => Object.values(info).join(',')).join('\n');
-            fs.writeFileSync(fileName, `${header}\n${data}`, 'utf-8');
-        } else {
-            // You can use a library like exceljs to write xlsx files
-        }
-
-        console.log(`Saved to ${fileName}`);
-
-        await browser.close();
     });
 }
 
