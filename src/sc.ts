@@ -1,6 +1,7 @@
-import path from 'path';
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
+import * as path from 'path';
+import { getLkCredentials, enterIdsOnLkSignin, delay } from './utils2';
 
 async function getLeadInfo(page: puppeteer.Page): Promise<any[]> {
     const profileUrlSelector = "a[data-lead-search-result='profile-link-st190']";
@@ -43,36 +44,48 @@ async function getLeadInfo(page: puppeteer.Page): Promise<any[]> {
 }
 
 async function main() {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: false, args: ['--start-maximized'] });
     const page = await browser.newPage();
     await page.setViewport({ width: 1920, height: 1080 });
-    await page.goto('https://bitly.cx/NuT');
 
-    await page.waitForNavigation({ waitUntil: 'networkidle0' });
+    const credentials = await getLkCredentials();
+    await page.goto('https://www.linkedin.com/sales/login');
 
-    const allLeads = [];
-    for (let i = 1; i <= 5; i++) {
-        const searchUrl = `https://bitly.cx/NuT&page=${i}`;
+    try {
+        await enterIdsOnLkSignin(page, credentials.email, credentials.password);
+
+        // Ensure the URL is correct and accessible
+        const searchUrl = 'https://www.linkedin.com/sales/search/people?query=(recentSearchParam%3A(id%3A3742503252%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_COMPANY%2Cvalues%3AList((id%3Aurn%253Ali%253Aorganization%253A1189697%2Ctext%3AOptimizely%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A3653845%2Ctext%3ASnowflake%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A1066442%2Ctext%3ADatadog%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A2857634%2Ctext%3ACoinbase%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A400528%2Ctext%3ATwilio%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A2532259%2Ctext%3AZoom%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))))%2C(type%3ACURRENT_TITLE%2Cvalues%3AList((id%3A280%2Ctext%3AChief%2520Operating%2520Officer%2CselectionType%3AINCLUDED)%2C(id%3A14%2Ctext%3ASales%2520Manager%2CselectionType%3AINCLUDED)))))&sessionId=T85e33rOR%2FOGZgyNt%2FUUHA%3D%3D&viewAllFilters=true';
         await page.goto(searchUrl);
-        await page.waitForSelector('ol > li');
 
-        const leads = await getLeadInfo(page);
-        allLeads.push(...leads);
+        const allLeads = [];
+        for (let i = 1; i <= 5; i++) {
+            const paginatedUrl = `${searchUrl}&page=${i}`;
+            await page.goto(paginatedUrl);
+            await page.waitForSelector('ol > li', { timeout: 60000 });
+
+            const leads = await getLeadInfo(page);
+            allLeads.push(...leads);
+        }
+
+        console.log(`Found ${allLeads.length} leads.`);
+
+        // Save the leads to a CSV file
+        const csvContent = [
+            'profileUrl,fullName,firstName,lastName,connection,location,profilePictureUrl,premiumStatus,openLinkStatus,currentCompanyName,currentIndustry,currentPositionTitle',
+            ...allLeads.map(lead => `${lead.profileUrl},${lead.fullName},${lead.fullName.split(' ')[0]},${lead.fullName.split(' ').slice(1).join(' ')},${lead.connection},${lead.location},${lead.profilePictureUrl},${lead.premiumStatus},${lead.openLinkStatus},${lead.currentCompanyName},${lead.currentIndustry},${lead.currentPositionTitle}`)
+        ].join('\n');
+
+        const filePath = path.join(__dirname, 'lksn_data', `${Date.now()}_lk_salesnav_export.csv`);
+        fs.writeFileSync(filePath, csvContent);
+        console.log(`Saved to ${filePath}`);
+
+        await browser.close();
+    } catch (error) {
+        console.error('Error during the process:', error);
+        console.log(await page.content()); // Log the page content for debugging
+        await browser.close();
     }
-
-    console.log(`Found ${allLeads.length} leads.`);
-
-    // Save the leads to a CSV file
-    const csvContent = [
-        'profileUrl,fullName,firstName,lastName,connection,location,profilePictureUrl,premiumStatus,openLinkStatus,currentCompanyName,currentIndustry,currentPositionTitle',
-        ...allLeads.map(lead => `${lead.profileUrl},${lead.fullName},${lead.fullName.split(' ')[0]},${lead.fullName.split(' ').slice(1).join(' ')},${lead.connection},${lead.location},${lead.profilePictureUrl},${lead.premiumStatus},${lead.openLinkStatus},${lead.currentCompanyName},${lead.currentIndustry},${lead.currentPositionTitle}`)
-    ].join('\n');
-
-    const filePath = path.join(__dirname, 'lksn_data', `${Date.now()}_lk_salesnav_export.csv`);
-    fs.writeFileSync(filePath, csvContent);
-    console.log(`Saved to ${filePath}`);
-
-    await browser.close();
 }
 
 main();
