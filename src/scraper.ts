@@ -231,19 +231,18 @@ async function main() {
     rl.question('Please complete any required verification and press Enter...', async () => {
         rl.close();
         try {
-            // Wait for manual verification
-            await delay(10000); // Wait 10 seconds for user to complete verification
+            await delay(10000); // Wait 10 seconds
 
             // Check if still on the login or verification page
             const currentUrl = page.url();
             if (currentUrl.includes('checkpoint') || currentUrl.includes('login')) {
                 console.log('Verification might still be required. Please complete it in the browser.');
-                await delay(60000); // Wait an additional 60 seconds
+                await delay(60000); // Wait additional 60 seconds
             }
 
             console.log('Proceeding to the search URL...');
 
-            // Remove session-specific parameters if needed
+            // Remove session-specific parameters
             const cleanedSearchUrl = removeUrlParameter(searchUrl, 'sessionId');
             const cleanedSearchUrlFinal = removeUrlParameter(cleanedSearchUrl, 'viewAllFilters');
 
