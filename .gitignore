@@ -143,3 +143,7 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Ignore the lk_credentials.json files
+src/lk_credentials.json
+lk_credentials.json
