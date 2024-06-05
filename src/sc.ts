@@ -54,7 +54,6 @@ async function main() {
     try {
         await enterIdsOnLkSignin(page, credentials.email, credentials.password);
 
-        // Ensure the URL is correct and accessible
         const searchUrl = 'https://www.linkedin.com/sales/search/people?query=(recentSearchParam%3A(id%3A3742503252%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_COMPANY%2Cvalues%3AList((id%3Aurn%253Ali%253Aorganization%253A1189697%2Ctext%3AOptimizely%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A3653845%2Ctext%3ASnowflake%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A1066442%2Ctext%3ADatadog%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A2857634%2Ctext%3ACoinbase%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A400528%2Ctext%3ATwilio%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))%2C(id%3Aurn%253Ali%253Aorganization%253A2532259%2Ctext%3AZoom%2CselectionType%3AINCLUDED%2Cparent%3A(id%3A0))))%2C(type%3ACURRENT_TITLE%2Cvalues%3AList((id%3A280%2Ctext%3AChief%2520Operating%2520Officer%2CselectionType%3AINCLUDED)%2C(id%3A14%2Ctext%3ASales%2520Manager%2CselectionType%3AINCLUDED)))))&sessionId=T85e33rOR%2FOGZgyNt%2FUUHA%3D%3D&viewAllFilters=true';
         await page.goto(searchUrl);
 
@@ -83,7 +82,7 @@ async function main() {
         await browser.close();
     } catch (error) {
         console.error('Error during the process:', error);
-        console.log(await page.content()); // Log the page content for debugging
+        console.log(await page.content()); 
         await browser.close();
     }
 }

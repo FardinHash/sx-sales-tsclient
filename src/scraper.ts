@@ -161,12 +161,12 @@ async function getAllInfoFromPageSource(pageSource: string) {
 }
 
 async function getAllInfoFromSearchUrl(page: puppeteer.Page, url: string, waitAfterPageLoaded = 5, waitAfterScrollDown = 5) {
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 }); // Increased timeout to 120 seconds
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 }); 
     await delay(waitAfterPageLoaded * 1000);
     await page.evaluate(SCROLL_TO_BOTTOM_COMMAND);
     await delay(waitAfterScrollDown * 1000);
     const pageSource = await page.content();
-    fs.writeFileSync('pageSource.html', pageSource);  // Save page source for debugging
+    fs.writeFileSync('pageSource.html', pageSource);  
     return await getAllInfoFromPageSource(pageSource);
 }
 
@@ -252,14 +252,14 @@ async function main() {
 
             // Get total leads
             const totalLeads = await getTotalLeads(page);
-            console.log(`This sales navigator search URL contains ${totalLeads} leads.`);
+            // console.log(`This sales navigator search URL contains ${totalLeads} leads.`);
 
             const searchUrlBase = new URL(cleanedSearchUrlFinal);
             const cleanedSearchUrlBase = removeUrlParameter(cleanedSearchUrlFinal, 'page');
 
             const lksnSearchInfos = await scrapLksnPages(page, Array.from({ length: endPage - startPage + 1 }, (_, i) => i + startPage), searchUrlBase, waitTimeBetweenPages, waitAfterPageLoaded, waitAfterScrollDown);
 
-            console.log(`Found ${lksnSearchInfos.length} leads.`);
+            console.log(`This sales navigator search URL contains ${totalLeads} leads.`);
 
             if (lksnSearchInfos.length === 0) {
                 console.log('No leads found.');
@@ -279,7 +279,6 @@ async function main() {
                 const data = lksnSearchInfos.map(info => Object.values(info).join(',')).join('\n');
                 fs.writeFileSync(fileName, `${header}\n${data}`, 'utf-8');
             } else {
-                // You can use a library like exceljs to write xlsx files
             }
 
             console.log(`Saved to ${fileName}`);

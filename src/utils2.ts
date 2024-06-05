@@ -29,7 +29,7 @@ export async function enterIdsOnLkSignin(page: Page, email: string, password: st
         console.log('Navigation completed after sign-in.');
     } catch (error) {
         console.error('Error during sign-in:', error);
-        console.log(await page.content()); // Log the page content for debugging
+        console.log(await page.content()); 
     }
 }
 
